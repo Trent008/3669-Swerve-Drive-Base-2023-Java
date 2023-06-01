@@ -4,7 +4,10 @@ import com.ctre.phoenixpro.configs.TalonFXConfiguration;
 import com.ctre.phoenixpro.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenixpro.hardware.TalonFX;
 
-import rev.CANSparkMax;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkMaxPIDController;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 class SwerveModule {
     private Vector turnVector;         // vector corresponding to the way the rotation rate adds to the swerve module velocity
@@ -16,6 +19,8 @@ class SwerveModule {
     private TalonFX driveMotor;
     private VelocityTorqueCurrentFOC driveMotorCTRL;
     private CANSparkMax steeringMotor;
+    private SparkMaxPIDController steeringPID;
+    private RelativeEncoder steeringEncoder;
     private CANCoder wheelEncoder;
     private Vector wheelPositionChange;
 
@@ -48,6 +53,16 @@ class SwerveModule {
         driveMotor.setRotorPosition(0);
 
         steeringMotor.setInverted(true);
+        steeringEncoder = steeringMotor.getEncoder();
+        steeringEncoder.setPositionConversionFactor(360/12.8);
+        steeringPID = steeringMotor.getPIDController();
+        steeringPID.setP(0.1);
+        steeringPID.setI(1e-4);
+        steeringPID.setD(1);
+        steeringPID.setOutputRange(-1, 1);
+        steeringPID.enableContinousInput(-180, 180);
+        steeringEncoder.setPosition(wheelEncoder.getPosition());
+
     }
 
 
@@ -57,7 +72,7 @@ class SwerveModule {
         return robotRate.vector.getAdded(turnVector.getScaled(robotRate.angle.value));
     }
 
-    public void Set(Pose robotRate) {
+    public void set(Pose robotRate) {
         wheelAngle = wheelEncoder.GetAbsolutePosition();
         moduleVelocity = getModuleVector(robotRate);
         error = new Angle(moduleVelocity.getAngle());
@@ -69,7 +84,7 @@ class SwerveModule {
             rotationRate = -rotationRate;
             error.add(180);
         }
-        driveMotor.setControl(driveMotorCTRL.WithVelocity(rotationRate).WithFeedForward(frictionTorque));
+        driveMotor.setControl(driveMotorCTRL.withVelocity(rotationRate).withFeedForward(frictionTorque));
         
         steeringMotor.Set(error.value / 180);
     

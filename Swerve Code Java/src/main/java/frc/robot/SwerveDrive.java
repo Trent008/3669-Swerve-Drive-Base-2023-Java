@@ -20,8 +20,8 @@ modules[3] = new SwerveModule(14, 34, 24, new Vector(17.75, -25));
     double moduleWheelSpeed;         // stores the velocity of each module in turn
     double fastestModule;            // fastest module velocity to be limited to 1
     Vector averagePositionChange;    // average module position change
-    Vector fieldDisplacement{};      // field location in inches from the starting point
-    AHRS navx{frc::SPI::Port::kMXP}; // NavX V2 object
+    Vector fieldDisplacement = new Vector();      // field location in inches from the starting point
+    AHRS navx = new AHRS(frc.SPI.Port.kMXP); // NavX V2 object
     Angle navXAngle;
     Angle fieldAngle;
 
@@ -29,14 +29,10 @@ public:
     /**
      * runs the swerve modules using the values from the motion controller
      **/
-    void Set(Pose driveRate, bool isAutonomous = false, bool isRobotOriented = false)
+    void set(Pose driveRate, bool isAutonomous)
     {
         navXAngle = Angle{navx.GetYaw()};
         fieldAngle = navXAngle.getAdded(parameters.startingAngle);
-        if (isRobotOriented) {
-            driveRate = driveRate.getRotatedCW(fieldAngle.value);
-        }
-
         robotRate = driveRate.getRotatedCW(-fieldAngle.value); // robot orient the drive rate
 
         fastestModule = 1;
