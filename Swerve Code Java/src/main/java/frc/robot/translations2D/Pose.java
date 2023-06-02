@@ -1,8 +1,10 @@
+package frc.robot.translations2D;
+
 /**
  * stores a Vector object for a positional value
  * and an Angle object for an angular value
 */
-class Pose {
+public class Pose {
     public Vector vector; // stores the positional value of the pose
     public Angle angle;   // stores the angular value of the pose
     
@@ -13,7 +15,7 @@ class Pose {
     }
     
     public Pose() {
-        this.Pose(new Vector(), new Angle());
+        this(new Vector(), new Angle());
     }
 
     public Pose getAdded(Pose obj)

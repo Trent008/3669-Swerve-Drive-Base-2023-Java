@@ -1,9 +1,11 @@
+package frc.robot.translations2D;
+
 /**
  * stores 2D coordinates
  * can be added/subtacted with other Vector objects
  * or multiplied/divided by a double
 */
-class Vector {
+public class Vector {
     public double x, y; // coordinates
 
     /**
@@ -17,7 +19,7 @@ class Vector {
     }
 
     public Vector() {
-        this.Vector(0,0);
+        this(0,0);
     }
 
     // add another vector to this vector and return the result
@@ -72,13 +74,13 @@ class Vector {
     // return this vector's angle (-180 to 180 degrees)
     public double getAngle()
     {
-        return atan2(x, y) * 180 / M_PI;
+        return Math.atan2(x, y) * 180 / Math.PI;
     }
 
     // return this vector's magnitude as a double
     public double getMagnitude()
     {
-        return hypot(x, y);
+        return Math.hypot(x, y);
     }
 
     // move this vector toward another vector's value by the specified increment
@@ -96,16 +98,19 @@ class Vector {
     }
 
     // rotate this vector clockwise by the given angle
-    public Vector rotateCW(double angle)
+    public void rotateCW(double angle)
     {
-        angle *= M_PI / 180;
-        this = new Vector(x * cos(angle) + y * sin(angle), y * cos(angle) - x * sin(angle));
-        return this;
+        angle *= Math.PI / 180;
+        double newX, newY;
+        newX = x * Math.cos(angle) + y * Math.sin(angle);
+        newY = y * Math.cos(angle) - x * Math.sin(angle);
+        x = newX;
+        y = newY;
     }
 
     public Vector getRotatedCW(double angle)
     {
-        angle *= M_PI / 180;
-        return new Vector(x * cos(angle) + y * sin(angle), y * cos(angle) - x * sin(angle));
+        angle *= Math.PI / 180;
+        return new Vector(x * Math.cos(angle) + y * Math.sin(angle), y * Math.cos(angle) - x * Math.sin(angle));
     }
 };

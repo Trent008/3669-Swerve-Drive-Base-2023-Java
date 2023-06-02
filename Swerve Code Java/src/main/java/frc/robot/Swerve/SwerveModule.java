@@ -1,7 +1,7 @@
-import com.ctre.phoenix;
-import com.ctre.phoenixpro.StatusCode;
+package frc.robot.Swerve;
+import com.ctre.phoenix.sensors.CANCoder;
 import com.ctre.phoenixpro.configs.TalonFXConfiguration;
-import com.ctre.phoenixpro.controls.PositionTorqueCurrentFOC;
+import com.ctre.phoenixpro.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenixpro.hardware.TalonFX;
 
 import com.revrobotics.RelativeEncoder;
@@ -9,11 +9,16 @@ import com.revrobotics.SparkMaxPIDController;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import frc.robot.Constants.SwerveConstants;
+import frc.robot.translations2D.Angle;
+import frc.robot.translations2D.Pose;
+import frc.robot.translations2D.Vector;
+
 class SwerveModule {
     private Vector turnVector;         // vector corresponding to the way the rotation rate adds to the swerve module velocity
     private Vector moduleVelocity;     // stores this modules velocity vector
     private Angle error;
-    private double wheelAngle;
+    private Angle wheelAngle;
     private double lastPosition = 0;
     private double currentPosition;
     private TalonFX driveMotor;
@@ -32,12 +37,12 @@ class SwerveModule {
         driveMotor = new TalonFX(driveMotorID, "rio");
         driveMotorCTRL = new VelocityTorqueCurrentFOC(0, 0, 1, false);
 
-        steeringMotor = new CANSparkMax(steeringMotorID, rev::CANSparkMax::MotorType::kBrushless);
+        steeringMotor = new CANSparkMax(steeringMotorID, MotorType.kBrushless);
         
         wheelEncoder = new CANCoder(wheelEncoderID);
 
         turnVector = position;
-        turnVector.divide(abs(turnVector));
+        turnVector.divide(turnVector.getMagnitude());
         turnVector.rotateCW(90);
     }
 
@@ -47,8 +52,8 @@ class SwerveModule {
         configs.Slot1.kP = 5; // An error of 1 rotation per second results in 5 amps output
         configs.Slot1.kI = 0.1; // An error of 1 rotation per second increases output by 0.1 amps every second
         configs.Slot1.kD = 0.001; // A change of 1000 rotation per second squared results in 1 amp output
-        configs.TorqueCurrent.PeakForwardTorqueCurrent = parameters.ampsForRobotAccel;  // Peak output of 40 amps
-        configs.TorqueCurrent.PeakReverseTorqueCurrent = -parameters.ampsForRobotAccel; // Peak output of 40 amps
+        configs.TorqueCurrent.PeakForwardTorqueCurrent = SwerveConstants.ampsForRobotAccel;  // Peak output of 40 amps
+        configs.TorqueCurrent.PeakReverseTorqueCurrent = -SwerveConstants.ampsForRobotAccel; // Peak output of 40 amps
         driveMotor.getConfigurator().apply(configs);
         driveMotor.setRotorPosition(0);
 
@@ -60,8 +65,10 @@ class SwerveModule {
         steeringPID.setI(1e-4);
         steeringPID.setD(1);
         steeringPID.setOutputRange(-1, 1);
-        steeringPID.enableContinousInput(-180, 180);
-        steeringEncoder.setPosition(wheelEncoder.getPosition());
+        steeringPID.setPositionPIDWrappingEnabled(true);
+        steeringPID.setPositionPIDWrappingMinInput(-180);
+        steeringPID.setPositionPIDWrappingMaxInput(180);
+        steeringEncoder.setPosition(wheelEncoder.getAbsolutePosition());
 
     }
 
@@ -73,28 +80,28 @@ class SwerveModule {
     }
 
     public void set(Pose robotRate) {
-        wheelAngle = wheelEncoder.GetAbsolutePosition();
+        wheelAngle = new Angle(wheelEncoder.getAbsolutePosition());
         moduleVelocity = getModuleVector(robotRate);
         error = new Angle(moduleVelocity.getAngle());
         error.subtract(wheelAngle);
         double frictionTorque = 1;
-        double rotationRate = abs(moduleVelocity) * parameters.falconMaxRotationsPerSecond;
+        double rotationRate = moduleVelocity.getMagnitude() * SwerveConstants.falconMaxRotationsPerSecond;
         if (error.getMagnitude() > 90) {
             frictionTorque = -frictionTorque;
             rotationRate = -rotationRate;
-            error.add(180);
+            error.add(new Angle(180));
         }
         driveMotor.setControl(driveMotorCTRL.withVelocity(rotationRate).withFeedForward(frictionTorque));
         
-        steeringMotor.Set(error.value / 180);
+        steeringPID.setReference(moduleVelocity.getAngle(), CANSparkMax.ControlType.kPosition);//steeringMotor.Set(error.value / 180);
     
-        currentPosition = driveMotor.getPosition();
+        currentPosition = driveMotor.getPosition().getValue();
         wheelPositionChange = new Vector(0, currentPosition - lastPosition);
-        wheelPositionChange.rotateCW(wheelAngle);
+        wheelPositionChange.rotateCW(wheelAngle.value);
         lastPosition = currentPosition;
     }
 
     public Vector getwheelPositionChange() {
         return wheelPositionChange;
     }
-};
+}

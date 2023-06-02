@@ -1,9 +1,11 @@
+package frc.robot.translations2D;
+
 /**
  * stores angular values from -180 to 180 degrees
  * can be added or subtracted with other angles without going out of bounds
  * can be multiplied or divided by a double
  * */
-class Angle
+public class Angle
 {
     public double value; // size of the angle
 
@@ -18,7 +20,7 @@ class Angle
     }
 
     public Angle() {
-        this.Angle(0);
+        this(0);
     }
 
     /**
@@ -76,18 +78,18 @@ class Angle
         return this;
     }
     
-    public Angle getMagnitude()
+    public double getMagnitude()
     {
-        return abs(value);
+        return Math.abs(value);
     }
 
     // move this Angle object toward another Angle object
     public void moveToward(Angle target, double rate)
     {
         target.subtract(this);
-        if (abs(target.value) > 2 * rate)
+        if (Math.abs(target.value) > 2 * rate)
         {
-            target.divide(abs(target.value));
+            target.divide(Math.abs(target.value));
             target.scale(rate);
             this.add(target);
         }
