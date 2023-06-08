@@ -50,26 +50,22 @@ class SwerveModule {
         TalonFXConfiguration configs = new TalonFXConfiguration();
         /* Torque-based velocity does not require a feed forward, as torque will accelerate the rotor up to the desired velocity by itself */
         configs.Slot1.kP = 5; // An error of 1 rotation per second results in 5 amps output
-        configs.Slot1.kI = 0.1; // An error of 1 rotation per second increases output by 0.1 amps every second
+        configs.Slot1.kI = 0.005; // An error of 1 rotation per second increases output by 0.1 amps every second
         configs.Slot1.kD = 0.001; // A change of 1000 rotation per second squared results in 1 amp output
         configs.TorqueCurrent.PeakForwardTorqueCurrent = SwerveConstants.ampsForRobotAccel;  // Peak output of 40 amps
         configs.TorqueCurrent.PeakReverseTorqueCurrent = -SwerveConstants.ampsForRobotAccel; // Peak output of 40 amps
         driveMotor.getConfigurator().apply(configs);
         driveMotor.setRotorPosition(0);
-
         steeringMotor.setInverted(true);
         steeringEncoder = steeringMotor.getEncoder();
         steeringEncoder.setPositionConversionFactor(360/12.8);
         steeringPID = steeringMotor.getPIDController();
-        steeringPID.setP(0.1);
-        steeringPID.setI(1e-4);
-        steeringPID.setD(1);
+        steeringPID.setP(0.005);
         steeringPID.setOutputRange(-1, 1);
         steeringPID.setPositionPIDWrappingEnabled(true);
         steeringPID.setPositionPIDWrappingMinInput(-180);
         steeringPID.setPositionPIDWrappingMaxInput(180);
-        steeringEncoder.setPosition(wheelEncoder.getAbsolutePosition());
-
+        steeringMotor.burnFlash();
     }
 
 
@@ -81,19 +77,20 @@ class SwerveModule {
 
     public void set(Pose robotRate) {
         wheelAngle = new Angle(wheelEncoder.getAbsolutePosition());
+        // steeringEncoder.setPosition(wheelAngle.value);
         moduleVelocity = getModuleVector(robotRate);
-        error = new Angle(moduleVelocity.getAngle());
-        error.subtract(wheelAngle);
+        Angle wheelAngleSetpoint = new Angle(moduleVelocity.getAngle());
+        error = wheelAngleSetpoint.getSubtracted(wheelAngle);
         double frictionTorque = 1;
         double rotationRate = moduleVelocity.getMagnitude() * SwerveConstants.falconMaxRotationsPerSecond;
         if (error.getMagnitude() > 90) {
             frictionTorque = -frictionTorque;
             rotationRate = -rotationRate;
-            error.add(new Angle(180));
+            error.getAdded(new Angle(180));
         }
         driveMotor.setControl(driveMotorCTRL.withVelocity(rotationRate).withFeedForward(frictionTorque));
         
-        steeringPID.setReference(moduleVelocity.getAngle(), CANSparkMax.ControlType.kPosition);//steeringMotor.Set(error.value / 180);
+        steeringMotor.set(error.value/180);//steeringPID.setReference(wheelAngleSetpoint.value, CANSparkMax.ControlType.kPosition);
     
         currentPosition = driveMotor.getPosition().getValue();
         wheelPositionChange = new Vector(0, currentPosition - lastPosition);

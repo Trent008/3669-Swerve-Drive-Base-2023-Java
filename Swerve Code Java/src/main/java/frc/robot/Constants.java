@@ -7,8 +7,8 @@ import frc.robot.translations2D.Vector;
 
 public final class Constants {
     public static final class SwerveConstants {
-        public static final double robotAccelMetersPerSecondSquared = 10; // acceleration rate of the robot pose on the field
-        public static final double ampsForRobotAccel = 50;
+        public static final double robotAccelMetersPerSecondSquared = 6; // acceleration rate of the robot pose on the field
+        public static final double ampsForRobotAccel = 30;
         public static final double wheelDiameter = 3.9;
         public static final double driveMotorInchesPerRotation = (Math.PI * wheelDiameter / 6.75);
         public static final double falconMaxRotationsPerSecond = 101;

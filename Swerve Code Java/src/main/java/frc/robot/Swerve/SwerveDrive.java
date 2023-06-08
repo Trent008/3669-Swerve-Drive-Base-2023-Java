@@ -17,7 +17,7 @@ public class SwerveDrive
 {
     private List<SwerveModule> modules;
     private Pose robotRate; // stores the target robot-centric drive rate then the actual robot-cnetric drive rate
-    private Pose fieldRate; // field-centric rate after acceleration
+    private Pose fieldRate = new Pose(); // field-centric rate after acceleration
     private double moduleWheelSpeed;         // stores the velocity of each module in turn
     private double fastestModule;            // fastest module velocity to be limited to 1
     private Vector averagePositionChange;    // average module position change
